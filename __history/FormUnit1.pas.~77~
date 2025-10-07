@@ -1,0 +1,170 @@
+unit FormUnit1;
+
+interface
+
+uses
+  Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.AppEvnts, Vcl.StdCtrls, IdHTTPWebBrokerBridge, IdGlobal, Web.HTTPApp,
+  REST.Types, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope,
+  Vcl.MPlayer, StrUtils, System.Net.HttpClient;
+
+type
+  TForm1 = class(TForm)
+    Button1: TButton;
+    Label2: TLabel;
+    Prompt: TMemo;
+    RESTClient1: TRESTClient;
+    RESTResponse1: TRESTResponse;
+    Button2: TButton;
+    Button3: TButton;
+    RESTRequest1: TRESTRequest;
+    MediaPlayer1: TMediaPlayer;
+    procedure FormCreate(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+  private
+    FServer: TIdHTTPWebBrokerBridge;
+    procedure PlayVideoFromURL(const VideoURL: string);
+    { Private declarations }
+  public
+    OperationID: string;
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+uses
+{$IFDEF MSWINDOWS}
+  WinApi.Windows, Winapi.ShellApi,
+{$ENDIF}
+  System.Generics.Collections;
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  JSONBody: TStringStream;
+  InputText: string;
+begin
+  if (Prompt.Lines.Count > 0) and (Prompt.Lines[0] = 'Prompt') then
+    Prompt.Lines.Delete(0);
+
+  // Trim the prompt
+  InputText := Trim(Prompt.Lines.Text);
+
+  // Send the Request to the server
+  JSONBody := TStringStream.Create(
+    '{"prompt": "' + InputText + '"}', TEncoding.UTF8
+  );
+
+  // Configure REST client
+  RESTClient1.BaseURL := 'http://127.0.0.1:9000/generate';
+  RESTRequest1.Method := rmPOST;
+
+  // Clear any previous request data
+  RESTRequest1.Body.ClearBody;
+
+  RESTRequest1.Body.Add(JSONBody, ctAPPLICATION_JSON);
+  RESTRequest1.Execute;
+
+  // Save globally
+  OperationID := RESTResponse1.JSONValue.GetValue<string>('operation_id');
+
+  Label2.Caption := 'Operation ID:' + OperationID;
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+var
+  JSONBody: TStringStream;
+  SplitResult: TArray<string>;
+  Id, URL, OperationStatus: string;
+begin
+  // Split by the multi-character delimiter '/'
+  SplitResult := OperationID.Split(['/']);
+
+  // Check and get the last element
+  if Length(SplitResult) > 0 then
+    Id := SplitResult[High(SplitResult)]
+  else
+    Id := '';
+
+  // Build the full GET URL
+  URL := 'http://127.0.0.1:9000/check/' + Id;
+
+  // Configure REST client
+  RESTClient1.BaseURL := URL;
+  RESTRequest1.Method := rmGET;
+  RESTRequest1.Params.Clear;
+
+  // Execute GET request
+  RESTRequest1.Execute;
+
+  OperationStatus := RESTResponse1.JSONValue.GetValue<string>('status');
+
+  Label2.Caption := 'Operation Status:' + OperationStatus;
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+var
+  JSONBody: TStringStream;
+  SplitResult: TArray<string>;
+  Id, URL, VideoURL: string;
+begin
+  // Split by the multi-character delimiter '/'
+  SplitResult := OperationID.Split(['/']);
+
+  // Check and get the last element
+  if Length(SplitResult) > 0 then
+    Id := SplitResult[High(SplitResult)]
+  else
+    Id := '';
+
+  // Build the full GET URL
+  URL := 'http://127.0.0.1:9000/download/' + Id;
+
+  // Configure REST client
+  RESTClient1.BaseURL := URL;
+  RESTRequest1.Method := rmGET;
+  RESTRequest1.Params.Clear;
+
+  // Execute GET request
+  RESTRequest1.Execute;
+
+  VideoURL := RESTResponse1.JSONValue.GetValue<string>('video_url');
+
+  Label2.Caption := 'Download URL:' + VideoURL;
+
+  PlayVideoFromURL(VideoURL);
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);
+var
+  JSONBody: TStringStream;
+  SplitResult: TArray<string>;
+  Id, URL, VideoURL: string;
+begin
+  VideoURL := 'http://127.0.0.1:9000/static/1.mp4';
+  PlayVideoFromURL(VideoURL);
+end;
+
+procedure TForm1.PlayVideoFromURL(const VideoURL: string);
+begin
+  ShellExecute(0, 'open', PChar(VideoURL), nil, nil, SW_SHOWNORMAL);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  FServer := TIdHTTPWebBrokerBridge.Create(Self);
+
+  // Clear default text at startup
+  if Prompt.Text = 'Prompt' then
+    Prompt.Clear;
+end;
+
+end.

@@ -1,0 +1,94 @@
+object Form1: TForm1
+  Left = 271
+  Top = 114
+  Caption = 'Veo3 Integration'
+  ClientHeight = 446
+  ClientWidth = 503
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OnCreate = FormCreate
+  TextHeight = 13
+  object Label2: TLabel
+    Left = 24
+    Top = 277
+    Width = 30
+    Height = 13
+    Caption = 'Result'
+  end
+  object Button1: TButton
+    Left = 24
+    Top = 216
+    Width = 129
+    Height = 33
+    Caption = 'Generate'
+    TabOrder = 0
+    OnClick = Button1Click
+  end
+  object Prompt: TMemo
+    Left = 24
+    Top = 49
+    Width = 449
+    Height = 137
+    Lines.Strings = (
+      'Prompt')
+    TabOrder = 1
+  end
+  object Button2: TButton
+    Left = 184
+    Top = 216
+    Width = 129
+    Height = 33
+    Caption = 'Check Status'
+    TabOrder = 2
+    OnClick = Button2Click
+  end
+  object Button3: TButton
+    Left = 344
+    Top = 216
+    Width = 129
+    Height = 33
+    Caption = 'Download'
+    TabOrder = 3
+    OnClick = Button3Click
+  end
+  object MediaPlayer1: TMediaPlayer
+    Left = 24
+    Top = 312
+    Width = 253
+    Height = 30
+    AutoEnable = False
+    DoubleBuffered = True
+    ParentDoubleBuffered = False
+    TabOrder = 4
+    OnClick = MediaPlayer1Click
+  end
+  object RESTClient1: TRESTClient
+    BaseURL = 'http://127.0.0.1:9000'
+    Params = <>
+    ConnectTimeout = 300000
+    ReadTimeout = 300000
+    SynchronizedEvents = False
+    Left = 104
+    Top = 104
+  end
+  object RESTResponse1: TRESTResponse
+    Left = 360
+    Top = 104
+  end
+  object RESTRequest1: TRESTRequest
+    Client = RESTClient1
+    Params = <>
+    Response = RESTResponse1
+    SynchronizedEvents = False
+    Left = 232
+    Top = 104
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 24
+    Top = 360
+  end
+end
